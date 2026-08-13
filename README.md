@@ -4,6 +4,7 @@
 [![Plugin ID](https://img.shields.io/badge/Plugin%20ID-me.sahanranasingha.poll-green.svg)](https://github.com/sahanRanasingha/mattermost-plugin-whatsapp-polls)
 [![Developer](https://img.shields.io/badge/Developer-Sahan%20Ranasingha-166de0.svg)](https://sahanranasingha.me)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<iframe src="https://github.com/sponsors/sahanRanasingha/button" title="Sponsor sahanRanasingha" height="32" width="114" style="border: 0; border-radius: 6px;"></iframe>
 
 An interactive, modern **WhatsApp-style Polls Plugin** for Mattermost. Create clean, responsive polls with live progress bars, multiple-choice options, and creator-only moderation permissions directly within your team channels.
 
