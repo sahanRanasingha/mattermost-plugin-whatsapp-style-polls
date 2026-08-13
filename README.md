@@ -27,6 +27,7 @@ An interactive, modern **WhatsApp-style Polls Plugin** for Mattermost. Create cl
 
 | Poll Modal Builder | Custom WhatsApp Poll Card |
 | :---: | :---: |
+| ![Poll Modal Builder](public/poll_modal_builder.jpg) | ![Custom WhatsApp Poll Card](public/custom_whatsapp_poll_card.jpg) |
 | *Modal interface with custom question & dynamic options* | *Interactive poll with live vote counts & percentage bars* |
 
 ---
