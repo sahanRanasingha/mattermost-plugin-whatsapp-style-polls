@@ -6,7 +6,7 @@
     "author": "Sahan Ranasingha",
     "homepage_url": "https://sahanranasingha.me",
     "support_url": "https://sahanranasingha.me",
-    "icon_path": "public/icon.png",
+    "icon_path": "public/whatsapp_poll_plugin_icon.jpg",
     "min_server_version": "7.0.0",
     "server": {
         "executables": {
