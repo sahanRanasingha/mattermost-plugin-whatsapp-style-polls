@@ -1,0 +1,23 @@
+# Build & release artifacts
+/dist/
+/server/dist/
+/webapp/dist/
+*.tar.gz
+
+# Dependencies
+node_modules/
+/webapp/node_modules/
+
+# Go binaries and cover profiles
+*.out
+*.exe
+
+# Logs & temp
+*.log
+.tmp/
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
