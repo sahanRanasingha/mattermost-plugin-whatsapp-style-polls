@@ -104,6 +104,12 @@ func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Req
 			return
 		}
 		p.handleEditPoll(c, w, r)
+	case "/api/v1/polls/action_vote", "/api/v1/polls/action_vote/":
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		p.handleActionVote(c, w, r)
 	default:
 		p.API.LogError("Poll route not found", "rawPath", r.URL.Path, "parsedPath", path)
 		w.WriteHeader(http.StatusNotFound)
@@ -232,6 +238,49 @@ func (p *Plugin) handleVote(c *plugin.Context, w http.ResponseWriter, r *http.Re
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(poll)
+}
+
+func (p *Plugin) handleActionVote(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
+	var req model.PostActionIntegrationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		p.respondError(w, http.StatusBadRequest, "Invalid payload")
+		return
+	}
+
+	pollID, ok := req.Context["poll_id"].(string)
+	if !ok {
+		p.respondError(w, http.StatusBadRequest, "Missing poll_id")
+		return
+	}
+
+	optionIdx, ok := req.Context["option_idx"].(string)
+	if !ok {
+		p.respondError(w, http.StatusBadRequest, "Missing option_idx")
+		return
+	}
+
+	poll, err := p.getPoll(pollID)
+	if err != nil || poll == nil {
+		p.respondError(w, http.StatusNotFound, "Poll not found")
+		return
+	}
+
+	if poll.Ended {
+		json.NewEncoder(w).Encode(&model.PostActionIntegrationResponse{
+			EphemeralText: "Poll has ended.",
+		})
+		return
+	}
+
+	poll.Vote(req.UserId, optionIdx)
+
+	if err := p.updatePoll(poll); err != nil {
+		p.respondError(w, http.StatusInternalServerError, "Failed to update poll")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&model.PostActionIntegrationResponse{})
 }
 
 type ActionRequest struct {
@@ -422,6 +471,7 @@ func (p *Plugin) saveAndPostPoll(poll *Poll, channelID string) error {
 		Type:      PostTypePoll,
 		Props: model.StringInterface{
 			"poll": pollMap,
+			"attachments": generateAttachments(poll),
 		},
 	}
 
@@ -474,6 +524,11 @@ func (p *Plugin) updatePoll(poll *Poll) error {
 			post.Props = make(model.StringInterface)
 		}
 		post.Props["poll"] = pollMap
+		if attachments := generateAttachments(poll); attachments != nil {
+			post.Props["attachments"] = attachments
+		} else {
+			delete(post.Props, "attachments")
+		}
 		post.Message = generatePollFallback(poll)
 		p.API.UpdatePost(post)
 	}
@@ -503,6 +558,35 @@ func generatePollFallback(poll *Poll) string {
 	}
 	
 	return sb.String()
+}
+
+func generateAttachments(poll *Poll) []*model.SlackAttachment {
+	if poll.Ended {
+		return nil
+	}
+
+	var actions []*model.PostAction
+
+	for i, opt := range poll.Options {
+		actions = append(actions, &model.PostAction{
+			Id:    fmt.Sprintf("vote_%d", i),
+			Name:  opt,
+			Type:  model.PostActionTypeButton,
+			Integration: &model.PostActionIntegration{
+				URL: fmt.Sprintf("/plugins/%s/api/v1/polls/action_vote", ManifestID),
+				Context: map[string]interface{}{
+					"poll_id":    poll.ID,
+					"option_idx": fmt.Sprintf("%d", i),
+				},
+			},
+		})
+	}
+
+	return []*model.SlackAttachment{
+		{
+			Actions: actions,
+		},
+	}
 }
 
 func (p *Plugin) respondError(w http.ResponseWriter, code int, msg string) {
